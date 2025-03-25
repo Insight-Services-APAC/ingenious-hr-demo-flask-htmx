@@ -1,0 +1,31 @@
+{% if success %}
+<fluent-card>
+    <div style="padding: 16px;">
+        <fluent-tabs>
+            <fluent-tab id="text-tab" selected>Extracted Text</fluent-tab>
+            <fluent-tab id="json-tab">Generated JSON</fluent-tab>
+            
+            <fluent-tab-panel id="text-panel">
+                <div style="margin-top: 16px;">
+                    <fluent-text-area readonly style="width: 100%; min-height: 200px; resize: vertical;">{{ extracted_text }}</fluent-text-area>
+                </div>
+            </fluent-tab-panel>
+            
+            <fluent-tab-panel id="json-panel">
+                <pre id="job-criteria-json" style="background-color: var(--neutral-layer-2); padding: 16px; border-radius: 4px; overflow: auto; max-height: 200px; margin-top: 16px;">{{ job_criteria|tojson(indent=2) }}</pre>
+            </fluent-tab-panel>
+        </fluent-tabs>
+        
+        <div style="margin-top: 16px;">
+            <fluent-button id="update-criteria-btn" appearance="accent" style="width: 100%;">
+                <span class="ms-Icon ms-Icon--Save" aria-hidden="true"></span>
+                <span style="margin-left: 8px;">Update Job Criteria</span>
+            </fluent-button>
+        </div>
+    </div>
+</fluent-card>
+{% else %}
+<div style="padding: 16px; background-color: var(--error-background); color: var(--error-font); border-radius: 4px;">
+    {{ error }}
+</div>
+{% endif %}

@@ -1,0 +1,52 @@
+<div class="cv-analysis">
+    <h4 class="mb-3">CV: {{ result['CV Name'] }}</h4>
+    
+    <!-- Summary Card -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">Candidate Summary</h5>
+        </div>
+        <div class="card-body">
+            {% if result['Analysis'] %}
+                {{ result['Analysis']|markdown|safe }}
+            {% else %}
+                <div class="alert alert-warning">No analysis available for this CV.</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Feedback Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">Feedback</h5>
+        </div>
+        <div class="card-body">
+            <p>Was this analysis helpful?</p>
+            <div class="d-flex">
+                <button class="btn btn-outline-success me-2" 
+                        hx-post="{{ url_for('cv.submit_feedback') }}"
+                        hx-trigger="click"
+                        hx-vals='{"message_id": "{{ result['Message ID'] }}", "thread_id": "{{ result['Thread ID'] }}", "positive": "true"}'
+                        hx-swap="outerHTML">
+                    <i class="fas fa-thumbs-up me-2"></i> Helpful
+                </button>
+                
+                <button class="btn btn-outline-danger" 
+                        hx-post="{{ url_for('cv.submit_feedback') }}"
+                        hx-trigger="click"
+                        hx-vals='{"message_id": "{{ result['Message ID'] }}", "thread_id": "{{ result['Thread ID'] }}", "positive": "false"}'
+                        hx-swap="outerHTML">
+                    <i class="fas fa-thumbs-down me-2"></i> Not Helpful
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="d-flex justify-content-end">
+        <a href="{{ url_for('cv.interview') }}?cv={{ result['CV Name'] }}" class="btn btn-primary">
+            <i class="fas fa-question-circle me-2"></i> Generate Interview Questions
+        </a>
+    </div>
+</div>
+
