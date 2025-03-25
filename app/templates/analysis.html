@@ -8,67 +8,43 @@
         <h3 class="card-title">Analysis Results</h3>
     </div>
     <div class="card-body">
-        <ul class="nav nav-tabs" id="cvTabs" role="tablist">
-            {% for result in results %}
-            <li class="nav-item" role="presentation">
-                <button class="nav-link {% if loop.first %}active{% endif %}" 
-                        id="cv-tab-{{ loop.index0 }}" 
-                        data-bs-toggle="tab" 
-                        data-bs-target="#cv-content-{{ loop.index0 }}" 
-                        type="button" 
-                        role="tab" 
-                        aria-controls="cv-content-{{ loop.index0 }}" 
-                        aria-selected="{% if loop.first %}true{% else %}false{% endif %}"
-                        hx-get="{{ url_for('cv.view_cv', index=loop.index0) }}"
-                        hx-trigger="click once"
-                        hx-target="#cv-content-{{ loop.index0 }}"
-                        hx-swap="innerHTML">
-                    {{ result['CV Name'] }}
-                </button>
-            </li>
-            {% endfor %}
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" href="{{ url_for('cv.summary') }}">
-                    🔍 Comparative Summary
-                </a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" href="{{ url_for('cv.interview') }}">
-                    🎯 Interview Questions
-                </a>
-            </li>
-        </ul>
-        
-        <div class="tab-content p-3" id="cvTabsContent">
-            {% for result in results %}
-            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
-                 id="cv-content-{{ loop.index0 }}" 
-                 role="tabpanel" 
-                 aria-labelledby="cv-tab-{{ loop.index0 }}">
-                {% if loop.first %}
-                    {% include 'components/cv_analysis.html' with context %}
-                {% else %}
-                    <div class="d-flex justify-content-center">
-                        <div class="spinner-border text-primary my-5" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-            {% endfor %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>CV Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result['CV Name'] }}</td>
+                        <td>
+                            <a href="{{ url_for('cv_detail.view', index=loop.index0) }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye me-2"></i> View Analysis
+                            </a>
+                            <a href="{{ url_for('interview.index', cv=result['CV Name']) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-question-circle me-2"></i> Generate Questions
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <div class="d-flex justify-content-between mb-4">
-    <a href="{{ url_for('cv.index') }}" class="btn btn-outline-secondary">
+    <a href="{{ url_for('home.index') }}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-left me-2"></i> Back to Home
     </a>
     <div>
-        <a href="{{ url_for('cv.summary') }}" class="btn btn-primary me-2">
+        <a href="{{ url_for('summary.index') }}" class="btn btn-primary me-2">
             <i class="fas fa-chart-bar me-2"></i> Comparative Summary
         </a>
-        <a href="{{ url_for('cv.export_results') }}" class="btn btn-success">
+        <a href="{{ url_for('analysis.export_results') }}" class="btn btn-success">
             <i class="fas fa-file-export me-2"></i> Export Results as CSV
         </a>
     </div>

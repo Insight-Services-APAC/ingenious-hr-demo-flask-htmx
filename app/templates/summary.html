@@ -6,40 +6,28 @@
 <div class="card mb-4">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h3 class="card-title mb-0">Comparative Summary of All CVs</h3>
-        <button class="btn btn-light btn-sm" 
-                hx-post="{{ url_for('cv.regenerate_summary') }}"
-                hx-trigger="click"
-                hx-target="#summary-content"
-                hx-swap="innerHTML"
-                hx-indicator="#summary-loading">
-            <i class="fas fa-sync-alt me-2"></i> Regenerate Summary
-        </button>
+        <form action="{{ url_for('summary.regenerate') }}" method="post">
+            <button type="submit" class="btn btn-light btn-sm">
+                <i class="fas fa-sync-alt me-2"></i> Regenerate Summary
+            </button>
+        </form>
     </div>
     <div class="card-body">
-        <div id="summary-loading" class="htmx-indicator text-center my-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+        {% if session.get('summary_content') %}
+            {{ session.get('summary_content')|markdown|safe }}
+        {% else %}
+            <div class="alert alert-warning">
+                No summary has been generated yet. Click the "Regenerate Summary" button to create one.
             </div>
-            <p class="mt-2">Generating comparative summary. This may take a moment...</p>
-        </div>
-        
-        <div id="summary-content">
-            {% if session.get('summary_content') %}
-                {{ session.get('summary_content')|markdown|safe }}
-            {% else %}
-                <div class="alert alert-warning">
-                    No summary has been generated yet. Click the "Regenerate Summary" button to create one.
-                </div>
-            {% endif %}
-        </div>
+        {% endif %}
     </div>
 </div>
 
 <div class="d-flex justify-content-between mb-4">
-    <a href="{{ url_for('cv.analysis') }}" class="btn btn-outline-secondary">
+    <a href="{{ url_for('analysis.index') }}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-left me-2"></i> Back to Analysis
     </a>
-    <a href="{{ url_for('cv.interview') }}" class="btn btn-primary">
+    <a href="{{ url_for('interview.index') }}" class="btn btn-primary">
         <i class="fas fa-question-circle me-2"></i> Generate Interview Questions
     </a>
 </div>

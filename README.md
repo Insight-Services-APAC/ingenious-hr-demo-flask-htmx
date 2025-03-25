@@ -2,115 +2,138 @@
 
 ## Overview
 
-The CV Analysis Tool is a web-based application designed to assist recruiters in evaluating and comparing candidate CVs. Built with Flask and HTMX, the tool enables users to upload multiple CV files (PDF, DOCX, TXT), process them via an external API, and generate detailed analyses. Additionally, it leverages Azure OpenAI services to create comprehensive comparative summaries and tailored interview questions. With integrated job criteria configuration and export capabilities, the application streamlines the recruitment process from CV assessment to interview preparation.
+The **CV Analysis Tool** is a web-based application designed to streamline the recruitment process for HR teams and recruiters. It allows you to upload candidate CVs in various formats (PDF, DOCX, or TXT), extract and analyze the content with AI-powered services, and generate detailed insights and interview questions. The tool also provides a mechanism to update and preview job evaluation criteria based on uploaded job description documents, enabling a continuous and adaptive recruitment strategy.
 
-## Features
+### Key Features
 
-- **CV File Upload & Analysis:** Upload one or more CVs for automated processing.
-- **Real-Time Progress Tracking:** Monitor the status of file uploads and analysis via a dynamic progress bar.
-- **Comparative Summary:** Generate detailed summaries comparing candidate qualifications, experience, and skills.
-- **Interview Question Generation:** Create tailored interview questions based on the CV analyses.
-- **Job Criteria Configuration:** Update evaluation criteria by uploading job description documents.
-- **Feedback Mechanism:** Submit feedback on the quality of CV analyses.
-- **Export Results:** Export analysis data as CSV for further review.
+- **CV Upload & Analysis:**  
+  Upload multiple CVs at once, extract text content automatically, and receive AI-driven analyses of each document.
+
+- **Comparative Summary:**  
+  Generate a comprehensive, side-by-side summary highlighting the strengths and weaknesses of all analyzed CVs.
+
+- **Interview Questions:**  
+  Automatically produce tailored interview questions based on each candidate’s unique CV analysis.
+
+- **Job Criteria Update:**  
+  Dynamically update the job evaluation criteria by uploading a job description document. The system parses the document to create or refine the evaluation framework.
+
+- **Feedback Mechanism:**  
+  Submit feedback on the AI analysis to help refine future performance (via the integrated API feedback feature).
+
+- **Export Results:**  
+  Download all CV analysis results in a CSV file for archiving or offline review.
 
 ## Project Structure
+
+Below is a high-level view of the project's structure:
 
 ```
 flask-htmx-hr-demo/
 ├── app.py
 ├── requirements.txt
 ├── .env.example
-└── app/
-    ├── __init__.py
-    ├── config.py
-    ├── routes.py
-    ├── services/
-    │   ├── api_client.py
-    │   ├── openai_client.py
-    │   └── text_extraction.py
-    ├── static/
-    │   └── js/
-    │       ├── home.js
-    │       └── main.js
-    ├── templates/
-    │   ├── analysis.html
-    │   ├── home.html
-    │   ├── interview.html
-    │   ├── summary.html
-    │   ├── components/
-    │   │   ├── cv_analysis.html
-    │   │   ├── feedback.html
-    │   │   ├── file_upload.html
-    │   │   └── job_criteria.html
-    │   └── layouts/
-    │       └── base.html
-    └── utils/
-        └── helpers.py
+├── app/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── db.py
+│   ├── blueprints/
+│   ├── services/
+│   ├── static/
+│   ├── templates/
+│   └── utils/
+└── instance/
+    ├── app.db
+    ├── flask_session/
+    └── uploads/
 ```
 
 ## Key Files and Their Roles
 
-- **app.py**  
-  Entry point for the Flask application. It creates and runs the app using the application factory pattern.
+### Top-Level Files
 
-- **requirements.txt**  
-  Lists all Python dependencies required to run the application, ensuring reproducible environments.
+- **Dockerfile**  
+  Defines the container image setup for deploying the application. Installs Python dependencies, sets up environment variables, and starts the Flask application.
+
+- **.dockerignore**  
+  Specifies files and folders to ignore when building the Docker image (e.g., local `.env` files, caches, and instance data).
 
 - **.env.example**  
-  A sample environment configuration file that includes settings for Flask, API credentials, Azure Blob Storage, and Azure OpenAI.
+  Provides an example of the environment variables needed (e.g., API credentials, Azure settings). Copy and rename this to `.env` and fill in the required values before running the application.
 
-- **app/\_\_init\_\_.py**  
-  Contains the Flask application factory (`create_app()`). It sets up sessions, file upload configurations, registers routes, and adds custom template filters.
+- **app.py**  
+  The entry point for running the Flask application. It creates the Flask app instance by calling `create_app()` from `app/__init__.py`.
 
-- **app/config.py**  
-  Loads configuration settings from environment variables (using dotenv) and sets default values for the application.
+- **requirements.txt**  
+  Lists all Python dependencies for the project. Installing from this file ensures all necessary libraries (e.g., Flask, Azure, PyPDF) are available.
 
-- **app/routes.py**  
-  Defines the URL routes and view functions for handling file uploads, processing analyses, generating summaries and interview questions, managing feedback, and updating job criteria.
+### The `app/` Package
 
-- **app/services/api_client.py**  
-  Implements a client for interacting with an external API (FastAgent API) to submit CVs for analysis and to handle feedback submissions.
+- **`app/__init__.py`**  
+  Implements the Flask application factory (`create_app`). Configures environment settings, initializes the database, sets up session management, and registers blueprints.
 
-- **app/services/openai_client.py**  
-  Handles integration with Azure OpenAI services to generate comprehensive summaries and tailored interview questions from CV analysis data.
+- **`app/config.py`**  
+  Loads configuration settings (including environment variables) such as API base URLs and allowed file extensions. Contains the central configuration class used across the application.
 
-- **app/services/text_extraction.py**  
-  Provides functions to extract text content from various document types (PDF, DOCX, TXT).
+- **`app/db.py`**  
+  Manages a local SQLite database used to track analysis results, job statuses, and job queues. Provides functions to initialize, retrieve, and store results in the database.
 
-- **app/utils/helpers.py**  
-  Contains utility functions, such as converting extracted text into a JSON format for job criteria and updating job criteria in Azure Blob Storage.
+- **`app/blueprints/`**  
+  Houses modular route handlers that separate core functionalities:
+  - **home.py:** Manages the home page where users can upload CVs and job criteria files.
+  - **analysis.py:** Handles processing and analysis of uploaded CV files. Manages background jobs, progress checking, and exporting results as CSV.
+  - **cv_detail.py:** Displays the detailed analysis of a single CV.
+  - **feedback.py:** Allows users to submit feedback on the AI analysis.
+  - **interview.py:** Generates interview questions based on a selected CV analysis.
+  - **job_criteria.py:** Handles the upload and preview of job description documents to update job evaluation criteria.
+  - **summary.py:** Creates and displays a comparative summary of all analyzed CVs.
 
-- **Templates (app/templates/)**  
-  Contains HTML templates that form the user interface, including layouts, views for home, analysis results, comparative summaries, and interview question generation.
+- **`app/services/`**  
+  Contains modules for external service integrations:
+  - **api_client.py:** Communicates with the FastAgent API to submit CV content, retrieve analysis results, and handle feedback submissions.
+  - **openai_client.py:** Connects to Azure OpenAI to build prompts, summarize multiple analyses, and generate interview questions.
+  - **text_extraction.py:** Provides functions to extract text from PDF, DOCX, and TXT files.
 
-- **Static JavaScript (app/static/js/)**  
-  Includes client-side scripts to manage UI interactions, file uploads, progress tracking, and integration with HTMX and Bootstrap components.
+- **`app/static/`**  
+  Contains static assets such as JavaScript files.  
+  - **js/home.js:** Handles the user interactions on the home page (e.g., CV file uploads and their progress, job criteria form submissions).  
+  - **js/main.js:** Initializes Bootstrap components like tooltips and popovers.
 
-## Setup and Running
+- **`app/templates/`**  
+  Stores HTML templates for rendering pages.  
+  - **layouts/base.html:** The main template that defines the layout shared by all pages.  
+  - **analysis.html, cv_detail.html, home.html, interview.html, etc.:** Individual page templates for different sections/features in the application.  
+  - **components/:** Houses smaller reusable HTML components (e.g., file upload, feedback sections).
 
-1. **Clone the Repository:**  
-   Clone the project repository to your local machine.
+- **`app/utils/`**  
+  Contains utility functions:
+  - **helpers.py:** Functions for converting text into a job-criteria JSON format and updating files in Azure Blob Storage.
 
-2. **Install Dependencies:**  
-   Create a virtual environment and install the required packages:
+### The `instance/` Folder
+
+- **app.db:**  
+  SQLite database file containing stored analysis results and job data.
+
+- **flask_session/:**  
+  Directory for server-side sessions (managed by Flask-Session).
+
+- **uploads/:**  
+  Temporary storage for uploaded files (CVs and job description documents) during analysis.
+
+## Running the Application
+
+1. **Set Up Environment Variables**  
+   - Copy `.env.example` to `.env` and fill in your own credentials (API keys, Azure credentials, etc.).
+
+2. **Install Dependencies**  
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Configure Environment Variables:**  
-   Copy `.env.example` to `.env` and update the configuration values (e.g., API credentials, Azure endpoints, and keys).
-
-4. **Run the Application:**  
-   Start the Flask application using:
+3. **Run the Flask Application**  
    ```bash
    python app.py
    ```
-   The application will run in development mode with debugging enabled.
+   By default, this starts the server at `http://localhost:5000`.
 
-5. **Access the Application:**  
-   Open your web browser and navigate to [http://localhost:5000](http://localhost:5000) to start using the CV Analysis Tool.
-
-## Summary
-
-The CV Analysis Tool offers a comprehensive solution for recruiters to assess candidate profiles efficiently. By combining automated CV analysis, advanced AI-powered summaries, and tailored interview question generation, this tool simplifies the recruitment workflow and enhances decision-making.
+This setup allows you to analyze multiple CVs, review AI-generated insights, generate interview questions, and maintain dynamic job evaluation criteria—all from a single, user-friendly web interface.

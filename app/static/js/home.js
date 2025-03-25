@@ -1,62 +1,3 @@
-// For job criteria preview and update
-document.body.addEventListener('htmx:afterSwap', function(event) {
-    if (event.detail.target.id === 'job-criteria-preview') {
-        const updateBtn = document.getElementById('update-criteria-btn');
-        if (updateBtn) {
-            updateBtn.addEventListener('click', function() {
-                const jobCriteria = JSON.parse(document.getElementById('job-criteria-json').textContent);
-                
-                fetch("/update-job-criteria", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        job_criteria: jobCriteria
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const successDiv = document.createElement('div');
-                        successDiv.style.padding = '12px';
-                        successDiv.style.marginTop = '16px';
-                        successDiv.style.backgroundColor = 'var(--success-background)';
-                        successDiv.style.color = 'var(--success-font)';
-                        successDiv.style.borderRadius = '4px';
-                        successDiv.innerHTML = 'Job criteria updated successfully!';
-                        document.getElementById('job-criteria-preview').appendChild(successDiv);
-                        
-                        setTimeout(() => {
-                            successDiv.remove();
-                        }, 5000);
-                    } else {
-                        const errorDiv = document.createElement('div');
-                        errorDiv.style.padding = '12px';
-                        errorDiv.style.marginTop = '16px';
-                        errorDiv.style.backgroundColor = 'var(--error-background)';
-                        errorDiv.style.color = 'var(--error-font)';
-                        errorDiv.style.borderRadius = '4px';
-                        errorDiv.innerHTML = `Failed to update job criteria: ${data.error}`;
-                        document.getElementById('job-criteria-preview').appendChild(errorDiv);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    const errorDiv = document.createElement('div');
-                    errorDiv.style.padding = '12px';
-                    errorDiv.style.marginTop = '16px';
-                    errorDiv.style.backgroundColor = 'var(--error-background)';
-                    errorDiv.style.color = 'var(--error-font)';
-                    errorDiv.style.borderRadius = '4px';
-                    errorDiv.innerHTML = `Error: ${error.message}`;
-                    document.getElementById('job-criteria-preview').appendChild(errorDiv);
-                });
-            });
-        }
-    }
-});
-
 // CV Upload Form with Progress Bar
 document.addEventListener('DOMContentLoaded', function() {
     const uploadForm = document.getElementById('cv-upload-form');
@@ -66,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const analyzeBtn = document.getElementById('analyze-btn');
     
     if (uploadForm) {
-        // Debug to check if elements are found
         console.log("Upload form found:", uploadForm);
         console.log("Progress container:", progressContainer);
         console.log("Progress bar:", progressBar);
@@ -84,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (files.length === 0) {
                 alert('Please select at least one file');
-                progressContainer.style.display = 'none';
+                progressContainer.classList.add('d-none');
                 analyzeBtn.disabled = false;
                 return;
             }
@@ -106,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
             xhr.addEventListener('load', function() {
                 if (xhr.status === 200) {
                     updateProgressBar(100, 'Analysis complete!');
-                    window.location.href = "/analysis";
+                    window.location.href = "/analysis/";
                 } else if (xhr.status === 202) {
                     const data = JSON.parse(xhr.responseText);
                     const jobId = data.job_id;
@@ -121,11 +61,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             xhr.addEventListener('error', function() {
                 progressStatus.textContent = 'Upload failed. Please try again.';
-                progressBar.setAttribute('appearance', 'error');
+                progressBar.classList.remove('bg-primary');
+                progressBar.classList.add('bg-danger');
                 analyzeBtn.disabled = false;
             });
             
-            xhr.open('POST', '/upload-cv', true);
+            xhr.open('POST', '/analysis/upload-cv', true);
             xhr.send(formData);
             
             updateProgressBar(0, 'Preparing files...');
@@ -146,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function pollAnalysisProgress(jobId) {
         const pollInterval = setInterval(function() {
-            fetch('/check-progress?job_id=' + jobId)
+            fetch('/analysis/check-progress?job_id=' + jobId)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'processing') {
@@ -155,12 +96,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (data.status === 'completed') {
                         clearInterval(pollInterval);
                         updateProgressBar(100, 'Analysis complete!');
-                        window.location.href = "/analysis";
+                        window.location.href = "/analysis/";
                     } else if (data.status === 'failed') {
                         clearInterval(pollInterval);
                         progressStatus.textContent = 'Analysis failed: ' + data.message;
                         progressBar.classList.remove('bg-primary');
-                    progressBar.classList.add('bg-danger');
+                        progressBar.classList.add('bg-danger');
                         analyzeBtn.disabled = false;
                     }
                 })
@@ -168,5 +109,141 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Error polling progress:', error);
                 });
         }, 1000);
+    }
+
+    // Job Criteria Form handling
+    const jobCriteriaForm = document.getElementById('job-criteria-form');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const jobCriteriaPreview = document.getElementById('job-criteria-preview');
+
+    if (jobCriteriaForm) {
+        jobCriteriaForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('job_criteria_file');
+            if (!fileInput.files.length) {
+                alert('Please select a file');
+                return;
+            }
+
+            const formData = new FormData(jobCriteriaForm);
+            
+            // Show loading indicator
+            loadingIndicator.classList.remove('d-none');
+            
+            fetch('/job-criteria/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.classList.add('d-none');
+                
+                if (data.success) {
+                    jobCriteriaPreview.innerHTML = renderJobCriteriaPreview(data);
+                    
+                    // Add event listener to the update button
+                    const updateBtn = document.getElementById('update-criteria-btn');
+                    if (updateBtn) {
+                        updateBtn.addEventListener('click', function() {
+                            updateJobCriteria(data.job_criteria);
+                        });
+                    }
+                } else {
+                    jobCriteriaPreview.innerHTML = `
+                        <div class="alert alert-danger">
+                            ${data.error || 'An error occurred while processing the file'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                loadingIndicator.classList.add('d-none');
+                jobCriteriaPreview.innerHTML = `
+                    <div class="alert alert-danger">
+                        Error: ${error.message || 'An unexpected error occurred'}
+                    </div>
+                `;
+            });
+        });
+    }
+
+    function renderJobCriteriaPreview(data) {
+        return `
+            <div class="card">
+                <div class="card-header bg-light">
+                    <ul class="nav nav-tabs card-header-tabs" id="criteria-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-content" type="button" role="tab" aria-controls="text-content" aria-selected="true">
+                                Extracted Text
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="json-tab" data-bs-toggle="tab" data-bs-target="#json-content" type="button" role="tab" aria-controls="json-content" aria-selected="false">
+                                Generated JSON
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="criteriaTabContent">
+                        <div class="tab-pane fade show active" id="text-content" role="tabpanel" aria-labelledby="text-tab">
+                            <div class="form-floating">
+                                <textarea class="form-control" id="extracted-text" style="height: 200px" readonly>${data.extracted_text}</textarea>
+                                <label for="extracted-text">Extracted Text from Document</label>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="json-content" role="tabpanel" aria-labelledby="json-tab">
+                            <pre id="job-criteria-json" class="bg-light p-3 rounded" style="max-height: 200px; overflow-y: auto;">${JSON.stringify(data.job_criteria, null, 2)}</pre>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-3">
+                        <button id="update-criteria-btn" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i> Update Job Criteria
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function updateJobCriteria(jobCriteria) {
+        fetch('/job-criteria/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                job_criteria: jobCriteria
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const successDiv = document.createElement('div');
+                successDiv.className = 'alert alert-success mt-3';
+                successDiv.innerHTML = 'Job criteria updated successfully!';
+                jobCriteriaPreview.appendChild(successDiv);
+                
+                setTimeout(() => {
+                    if (successDiv.parentNode) {
+                        successDiv.parentNode.removeChild(successDiv);
+                    }
+                }, 5000);
+            } else {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger mt-3';
+                errorDiv.innerHTML = `Failed to update job criteria: ${data.error || 'Unknown error'}`;
+                jobCriteriaPreview.appendChild(errorDiv);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger mt-3';
+            errorDiv.innerHTML = `Error: ${error.message || 'An unexpected error occurred'}`;
+            jobCriteriaPreview.appendChild(errorDiv);
+        });
     }
 });

@@ -1,3 +1,4 @@
+# File: app/__init__.py
 """
 Flask application factory for CV Analysis Tool
 """
@@ -49,12 +50,21 @@ def create_app(test_config=None):
     # Create upload folder if it doesn't exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
-    # Register routes
-    from app import routes
-    app.register_blueprint(routes.bp)
+    # Initialize database
+    from app.db import init_db, close_db
+    with app.app_context():
+        init_db()
+    
+    @app.teardown_appcontext
+    def teardown_db(exception):
+        close_db(exception)
+    
+    # Register blueprints
+    from app.blueprints import register_blueprints
+    register_blueprints(app)
     
     # Set the default route
-    app.add_url_rule('/', endpoint='index')
+    app.add_url_rule('/', endpoint='home.index')
     
     # Add context processor for template variables
     @app.context_processor

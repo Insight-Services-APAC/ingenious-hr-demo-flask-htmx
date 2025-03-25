@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__
+*.py[cod]
+*$py.class
+
+# Virtual environment folders
+venv/
+env/
+ENV/
+
+# Environment variable files (if you don’t want to include secrets)
+.env
+.env.*
+
+# Instance folder (contains local database and session files)
+instance/
+
+# Git files
+.git
+.gitignore
+
+# Other unwanted files (databases, temporary files, etc.)
+*.db

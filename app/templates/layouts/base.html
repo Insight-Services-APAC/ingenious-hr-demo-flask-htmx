@@ -11,9 +11,6 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     
-    <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-    
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -22,30 +19,30 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('cv.index') }}">📄 CV Analysis Tool</a>
+            <a class="navbar-brand" href="{{ url_for('home.index') }}">📄 CV Analysis Tool</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'cv.index' %}active{% endif %}" href="{{ url_for('cv.index') }}">Home</a>
+                        <a class="nav-link {% if request.endpoint == 'home.index' %}active{% endif %}" href="{{ url_for('home.index') }}">Home</a>
                     </li>
-                    {% if session.get('results') %}
+                    {% if session.get('results_id') %}
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'cv.analysis' %}active{% endif %}" href="{{ url_for('cv.analysis') }}">Analysis</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'cv.summary' %}active{% endif %}" href="{{ url_for('cv.summary') }}">Comparative Summary</a>
+                        <a class="nav-link {% if request.endpoint.startswith('analysis.') %}active{% endif %}" href="{{ url_for('analysis.index') }}">Analysis</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'cv.interview' %}active{% endif %}" href="{{ url_for('cv.interview') }}">Interview Questions</a>
+                        <a class="nav-link {% if request.endpoint.startswith('summary.') %}active{% endif %}" href="{{ url_for('summary.index') }}">Comparative Summary</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('cv.export_results') }}">Export CSV</a>
+                        <a class="nav-link {% if request.endpoint.startswith('interview.') %}active{% endif %}" href="{{ url_for('interview.index') }}">Interview Questions</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning" href="{{ url_for('cv.index', clear='true') }}">Clear Results</a>
+                        <a class="nav-link" href="{{ url_for('analysis.export_results') }}">Export CSV</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning" href="{{ url_for('home.index', clear='true') }}">Clear Results</a>
                     </li>
                     {% endif %}
                 </ul>
@@ -55,7 +52,7 @@
 
     <div class="container-fluid mt-4 mb-5">
         <div class="row">
-            {% if request.endpoint == 'cv.index' %}
+            {% if request.endpoint == 'home.index' %}
             <div class="col-md-3">
                 {% block sidebar %}{% endblock %}
             </div>
